@@ -11,21 +11,24 @@ import com.payetonkawa.order.entity.Order;
 import com.payetonkawa.order.repository.OrderRepository;
 
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
 
 @Service
 @Transactional
-@AllArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
 
     private final RabbitTemplate rabbitTemplate;
 
-    @Value("${rabbitmq.queue.product:product.sync.queue}")
+    public OrderService(OrderRepository orderRepository, RabbitTemplate rabbitTemplate){
+        this.orderRepository = orderRepository;
+        this.rabbitTemplate = rabbitTemplate;
+    }
+
+    @Value("${rabbitmq.queue.product}")
     private String productQueue;
 
-    public List<Order> findall() {
+    public List<Order> findAll() {
         return orderRepository.findAll();
     }
 

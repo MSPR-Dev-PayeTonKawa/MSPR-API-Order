@@ -2,6 +2,7 @@ package com.payetonkawa.order.dto;
 
 import java.sql.Date;
 
+import jakarta.persistence.Column;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -11,16 +12,12 @@ import lombok.Setter;
 @NoArgsConstructor
 public class PatchOrderDto {
     private Integer idOrder;
-    
-    private String lastname;
 
-    private String firstname;
+    private Integer clientId;
 
-    private String address;
+    private String clientLastname;
 
-    private String email;
+    private String clientFirstname;
 
-    private String phoneNumber;
-
-    private Date dateOfCreation;
+    private String clientAddress;
 }

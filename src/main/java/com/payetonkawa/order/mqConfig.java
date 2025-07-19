@@ -1,4 +1,4 @@
-package com.payetonkawa.client;
+package com.payetonkawa.order;
 
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
