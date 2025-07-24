@@ -25,7 +25,7 @@ public class OrderDetailService {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    @Value("${rabbitmq.queue.product:product.sync.queue}")
+    @Value("${rabbitmq.queue.product}")
     private String productQueue;
 
     public List<OrderDetail> findAll() {
