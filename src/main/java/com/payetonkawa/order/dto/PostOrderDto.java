@@ -1,12 +1,12 @@
 package com.payetonkawa.order.dto;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class PostOrderDto {
     private Integer clientId;
 
@@ -16,5 +16,5 @@ public class PostOrderDto {
 
     private String clientAddress;
 
-    private boolean outdatedUserInformation;
+    private Boolean outdatedUserInformation;
 }

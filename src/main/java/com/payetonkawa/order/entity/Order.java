@@ -2,13 +2,15 @@ package com.payetonkawa.order.entity;
 
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
 @Setter
 @Table(name= "\"order\"")
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class Order {
     @Id
     @GeneratedValue(strategy=GenerationType.AUTO)
@@ -28,5 +30,5 @@ public class Order {
     private String clientAddress;
 
     @Column(name="outdated_user_information")
-    private boolean outdatedUserInformation;
+    private Boolean outdatedUserInformation;
 }

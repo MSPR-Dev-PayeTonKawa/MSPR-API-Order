@@ -10,4 +10,6 @@ import com.payetonkawa.order.entity.Order;
 public interface OrderMapper {
     Order fromPostDto(PostOrderDto postOrderDto);
     Order fromPatchDto(PatchOrderDto patchOrderDto);
+    PostOrderDto toPostDto(Order order);
+    PatchOrderDto toPatchDto(Order order);
 }

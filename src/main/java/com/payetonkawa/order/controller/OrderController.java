@@ -80,6 +80,7 @@ public class OrderController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
         try {
+            orderService.delete(id);
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
             log.error(e.getMessage());

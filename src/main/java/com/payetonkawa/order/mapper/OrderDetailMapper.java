@@ -9,4 +9,6 @@ import org.mapstruct.Mapper;
 public interface OrderDetailMapper {
     OrderDetail fromPostDto(PostOrderDetailDto postOrderDto);
     OrderDetail fromPatchDto(PatchOrderDetailDto patchOrderDto);
+    PostOrderDetailDto toPostDto(OrderDetail orderDetail);
+    PatchOrderDetailDto toPatchDto(OrderDetail orderDetail);
 }
