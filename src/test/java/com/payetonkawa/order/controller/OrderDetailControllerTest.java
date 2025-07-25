@@ -215,6 +215,13 @@ class OrderDetailControllerTest {
     }
 
     @Test
+    void delete_badRequest() throws Exception {
+        doThrow(new IllegalStateException()).when(orderDetailService).delete(1, false);
+        mockMvc.perform(delete("/order-detail/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void delete_error() throws Exception {
         doThrow(new RuntimeException()).when(orderDetailService).delete(1, false);
 
@@ -228,6 +235,13 @@ class OrderDetailControllerTest {
 
         mockMvc.perform(delete("/order-detail/1/cancel"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void cancel_badRequest() throws Exception {
+        doThrow(new IllegalStateException()).when(orderDetailService).delete(1, true);
+        mockMvc.perform(delete("/order-detail/1/cancel"))
+                .andExpect(status().isNotFound());
     }
 
     @Test

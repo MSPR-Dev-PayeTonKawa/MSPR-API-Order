@@ -85,6 +85,9 @@ public class OrderDetailController {
         try {
             orderDetailService.delete(id, false);
             return new ResponseEntity<>(HttpStatus.OK);
+        } catch (IllegalStateException e) {
+            log.error(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -96,6 +99,9 @@ public class OrderDetailController {
         try {
             orderDetailService.delete(id, true);
             return new ResponseEntity<>(HttpStatus.OK);
+        } catch (IllegalStateException e) {
+            log.error(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);

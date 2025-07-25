@@ -192,6 +192,13 @@ class OrderControllerTest {
     }
 
     @Test
+    void delete_badRequest() throws Exception {
+        doThrow(new IllegalStateException()).when(orderService).delete(1);
+        mockMvc.perform(delete("/order/1"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void delete_error() throws Exception {
         doThrow(new RuntimeException()).when(orderService).delete(1);
         mockMvc.perform(delete("/order/1"))

@@ -82,6 +82,9 @@ public class OrderController {
         try {
             orderService.delete(id);
             return new ResponseEntity<>(HttpStatus.OK);
+        } catch (IllegalStateException e) {
+            log.error(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
