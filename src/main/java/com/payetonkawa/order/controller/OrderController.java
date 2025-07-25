@@ -56,6 +56,7 @@ public class OrderController {
             Order no = orderService.insert(o);
             return new ResponseEntity<>(no, HttpStatus.OK);
         } catch (IllegalStateException e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -68,6 +69,7 @@ public class OrderController {
         try {
             return new ResponseEntity<>(orderService.update(orderMapper.fromPatchDto(dto)), HttpStatus.OK);
         } catch (IllegalStateException e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             log.error(e.getMessage());

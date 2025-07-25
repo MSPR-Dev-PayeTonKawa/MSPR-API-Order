@@ -59,6 +59,7 @@ public class OrderDetailController {
         try {
             return new ResponseEntity<>(orderDetailService.insert(orderDetailMapper.fromPostDto(dto)), HttpStatus.OK);
         } catch (IllegalStateException e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -71,6 +72,7 @@ public class OrderDetailController {
         try {
             return new ResponseEntity<>(orderDetailService.update(orderDetailMapper.fromPatchDto(dto)), HttpStatus.OK);
         } catch (IllegalStateException e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             log.error(e.getMessage());
