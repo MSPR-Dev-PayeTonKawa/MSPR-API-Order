@@ -1,7 +1,5 @@
 package com.payetonkawa.order.entity;
 
-import java.sql.Date;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -29,8 +27,11 @@ public class OrderDetail {
     private Integer idProduct;
 
     @Column(name="unit_price")
-    private String unitPrice;
+    private Integer unitPrice;
 
     @Column(name="quantity")
-    private String quantity;
+    private Integer quantity;
+
+    @Column(name="outdated_product_information")
+    private Boolean outdatedProductInformation;
 }

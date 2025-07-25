@@ -1,15 +1,16 @@
 package com.payetonkawa.order.service;
 
+import com.paketonkawa.resources.message.Action;
+import com.paketonkawa.resources.message.MessageDTO;
+import com.paketonkawa.resources.message.Table;
 import com.payetonkawa.order.entity.OrderDetail;
 import com.payetonkawa.order.repository.OrderDetailRepository;
-import com.payetonkawa.order.repository.OrderRepository;
 import jakarta.transaction.Transactional;
-import lombok.AllArgsConstructor;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -18,15 +19,12 @@ public class OrderDetailService {
 
     private final OrderDetailRepository orderDetailRepository;
 
-    private final RabbitTemplate rabbitTemplate;
+    private final MessagePublisher messagePublisher;
 
-    public OrderDetailService(OrderDetailRepository orderDetailRepository, RabbitTemplate rabbitTemplate){
+    public OrderDetailService(OrderDetailRepository orderDetailRepository, MessagePublisher messagePublisher){
         this.orderDetailRepository = orderDetailRepository;
-        this.rabbitTemplate = rabbitTemplate;
+        this.messagePublisher = messagePublisher;
     }
-
-    @Value("${rabbitmq.queue.product:product.sync.queue}")
-    private String productQueue;
 
     public List<OrderDetail> findAll() {
         return orderDetailRepository.findAll();
@@ -36,30 +34,53 @@ public class OrderDetailService {
         return orderDetailRepository.findById(id);
     }
 
-    public List<OrderDetail> findByOrderDetailId(Integer orderDetailId) {
-        return orderDetailRepository.findByOrder_IdOrder(orderDetailId);
+    public List<OrderDetail> findByOrderId(Integer orderId) {
+        return orderDetailRepository.findByOrder_IdOrder(orderId);
+    }
+
+    public void setOutdatedByProductId(Integer clientId){
+        for(OrderDetail orderDetail : orderDetailRepository.findByIdProduct(clientId)){
+            orderDetail.setOutdatedProductInformation(true);
+            orderDetailRepository.save(orderDetail);
+        }
     }
 
     public OrderDetail insert(OrderDetail orderDetail) throws IllegalStateException {
         if (orderDetail.getIdOrderDetail() != null && orderDetailRepository.existsById(orderDetail.getIdOrderDetail())) {
             throw new IllegalStateException("Entity already exists. Use update.");
         }
-        // TODO actions sur le messages broker pour synchroniser les autres bdd
+        Map<String, Object> information = new HashMap<>();
+        information.put("productId", orderDetail.getIdProduct());
+        information.put("quantity", orderDetail.getQuantity());
+        messagePublisher.sendMessage(new MessageDTO(Action.INSERT, Table.ORDER_DETAIL, information), "product");
         return orderDetailRepository.save(orderDetail);
     }
 
     public OrderDetail update(OrderDetail orderDetail) throws IllegalStateException {
-//        if (orderDetail.getIdOrderDetail() == null || !orderDetailRepository.existsById(orderDetail.getIdOrderDetail())) {
-//            throw new IllegalStateException("Entity doesn't exist. Use insert.");
-//        }
-        String msg = "test message in mq from app";
-        rabbitTemplate.convertAndSend(productQueue, msg);
-        // TODO actions sur le messages broker pour synchroniser les autres bdd
+        if (orderDetail.getIdOrderDetail() == null || !orderDetailRepository.existsById(orderDetail.getIdOrderDetail())) {
+            throw new IllegalStateException("Entity doesn't exist. Use insert.");
+        }
+        OrderDetail oldOrderDetail = orderDetailRepository.findById(orderDetail.getIdOrderDetail()).get();
+        if(!oldOrderDetail.getQuantity().equals(orderDetail.getQuantity())){
+            Map<String, Object> information = new HashMap<>();
+            information.put("productId", orderDetail.getIdProduct());
+            information.put("oldQuantity", oldOrderDetail.getQuantity());
+            information.put("newQuantity", orderDetail.getQuantity());
+            messagePublisher.sendMessage(new MessageDTO(Action.UPDATE, Table.ORDER_DETAIL, information), "product");
+        }
         return orderDetailRepository.save(orderDetail);
     }
 
-    public void delete(Integer id){
-        // TODO actions sur le messages broker pour synchroniser les autres bdd
+    public void delete(Integer id, boolean canceled){
+        if (!orderDetailRepository.existsById(id)) {
+            throw new IllegalStateException("Entity doesn't exist. Can't delete.");
+        }
+        OrderDetail orderDetail = orderDetailRepository.findById(id).get();
+        Map<String, Object> information = new HashMap<>();
+        information.put("productId", orderDetail.getIdProduct());
+        information.put("quantity", orderDetail.getQuantity());
+        information.put("canceled", canceled);
+        messagePublisher.sendMessage(new MessageDTO(Action.DELETE, Table.ORDER_DETAIL, information), "product");
         orderDetailRepository.deleteById(id);
     }
 }

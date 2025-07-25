@@ -1,6 +1,5 @@
 package com.payetonkawa.order.entity;
 
-import java.sql.Date;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -27,4 +26,7 @@ public class Order {
 
     @Column(name="client_address")
     private String clientAddress;
+
+    @Column(name="outdated_user_information")
+    private boolean outdatedUserInformation;
 }

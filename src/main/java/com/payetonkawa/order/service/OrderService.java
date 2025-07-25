@@ -1,10 +1,11 @@
 package com.payetonkawa.order.service;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
+import com.paketonkawa.resources.message.Action;
+import com.paketonkawa.resources.message.MessageDTO;
+import com.paketonkawa.resources.message.Table;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import com.payetonkawa.order.entity.Order;
@@ -14,19 +15,17 @@ import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
+@Slf4j
 public class OrderService {
 
     private final OrderRepository orderRepository;
 
-    private final RabbitTemplate rabbitTemplate;
+    private final MessagePublisher messagePublisher;
 
-    public OrderService(OrderRepository orderRepository, RabbitTemplate rabbitTemplate){
+    public OrderService(OrderRepository orderRepository, MessagePublisher messagePublisher){
         this.orderRepository = orderRepository;
-        this.rabbitTemplate = rabbitTemplate;
+        this.messagePublisher = messagePublisher;
     }
-
-    @Value("${rabbitmq.queue.product}")
-    private String productQueue;
 
     public List<Order> findAll() {
         return orderRepository.findAll();
@@ -36,26 +35,50 @@ public class OrderService {
         return orderRepository.findById(id);
     }
 
+    public List<Order> findByClientId(Integer clientId) {
+        return orderRepository.findByClientId(clientId);
+    }
+
+    public void setOutdatedByClientId(Integer clientId){
+        for(Order order : orderRepository.findByClientId(clientId)){
+            order.setOutdatedUserInformation(true);
+            orderRepository.save(order);
+        }
+    }
+
     public Order insert(Order order) throws IllegalStateException {
         if (order.getIdOrder() != null && orderRepository.existsById(order.getIdOrder())) {
             throw new IllegalStateException("Entity already exists. Use update.");
         }
-        // TODO actions sur le messages broker pour synchroniser les autres bdd
-        return orderRepository.save(order);
+        Order newOrder = orderRepository.save(order);
+        Map<String, Object> information = new HashMap<>();
+        information.put("clientId", newOrder.getClientId());
+        messagePublisher.sendMessage(new MessageDTO(Action.INSERT, Table.ORDER, information), "client");
+        return newOrder;
     }
 
     public Order update(Order order) throws IllegalStateException {
-//        if (order.getIdOrder() == null || !orderRepository.existsById(order.getIdOrder())) {
-//            throw new IllegalStateException("Entity doesn't exist. Use insert.");
-//        }
-        String msg = "test message in mq from app";
-        rabbitTemplate.convertAndSend(productQueue, msg);
-        // TODO actions sur le messages broker pour synchroniser les autres bdd
+        if (order.getIdOrder() == null || !orderRepository.existsById(order.getIdOrder())) {
+            throw new IllegalStateException("Entity doesn't exist. Use insert.");
+        }
+        Order oldOrder = orderRepository.findById(order.getIdOrder()).get();
+        if(!oldOrder.getClientId().equals(order.getClientId())){
+            Map<String, Object> information = new HashMap<>();
+            information.put("oldClientId", oldOrder.getClientId());
+            information.put("newClientId", order.getClientId());
+            messagePublisher.sendMessage(new MessageDTO(Action.UPDATE, Table.ORDER, information), "client");
+        }
         return orderRepository.save(order);
     }
 
     public void delete(Integer id){
-        // TODO actions sur le messages broker pour synchroniser les autres bdd
+        if (!orderRepository.existsById(id)) {
+            throw new IllegalStateException("Entity doesn't exist. Can't delete.");
+        }
+        Order order = orderRepository.findById(id).get();
+        Map<String, Object> information = new HashMap<>();
+        information.put("clientId", order.getClientId());
+        messagePublisher.sendMessage(new MessageDTO(Action.DELETE, Table.ORDER, information), "client");
         orderRepository.deleteById(id);
     }
 }

@@ -1,8 +1,5 @@
 package com.payetonkawa.order.dto;
 
-import java.sql.Date;
-
-import jakarta.persistence.Column;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -18,4 +15,6 @@ public class PostOrderDto {
     private String clientFirstname;
 
     private String clientAddress;
+
+    private boolean outdatedUserInformation;
 }

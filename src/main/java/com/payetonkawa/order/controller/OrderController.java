@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import java.util.List;
 import java.util.Optional;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +19,7 @@ import com.payetonkawa.order.service.OrderService;
 @RestController
 @RequestMapping("/order")
 @AllArgsConstructor
+@Slf4j
 public class OrderController {
 
     private final OrderService orderService;
@@ -28,6 +30,7 @@ public class OrderController {
         try {
             return new ResponseEntity<>(orderService.findAll(), HttpStatus.OK);
         } catch (Exception e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -41,6 +44,7 @@ public class OrderController {
             }
             return ResponseEntity.notFound().build();
         } catch (Exception e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -48,10 +52,13 @@ public class OrderController {
     @PostMapping()
     public ResponseEntity<Order> create(@RequestBody PostOrderDto dto) {
         try {
-            return new ResponseEntity<>(orderService.insert(orderMapper.fromPostDto(dto)), HttpStatus.OK);
+            Order o = orderMapper.fromPostDto(dto);
+            Order no = orderService.insert(o);
+            return new ResponseEntity<>(no, HttpStatus.OK);
         } catch (IllegalStateException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -63,6 +70,7 @@ public class OrderController {
         } catch (IllegalStateException e) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -72,6 +80,7 @@ public class OrderController {
         try {
             return new ResponseEntity<>(HttpStatus.OK);
         } catch (Exception e) {
+            log.error(e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
