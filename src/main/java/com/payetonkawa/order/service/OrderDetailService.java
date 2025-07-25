@@ -3,10 +3,15 @@ package com.payetonkawa.order.service;
 import com.paketonkawa.resources.message.Action;
 import com.paketonkawa.resources.message.MessageDTO;
 import com.paketonkawa.resources.message.Table;
+import com.payetonkawa.order.config.RestConfig;
+import com.payetonkawa.order.dto.ProductStockDto;
 import com.payetonkawa.order.entity.OrderDetail;
 import com.payetonkawa.order.repository.OrderDetailRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,9 +26,12 @@ public class OrderDetailService {
 
     private final MessagePublisher messagePublisher;
 
-    public OrderDetailService(OrderDetailRepository orderDetailRepository, MessagePublisher messagePublisher){
+    private final RestTemplate restTemplate;
+
+    public OrderDetailService(OrderDetailRepository orderDetailRepository, MessagePublisher messagePublisher, RestTemplate restTemplate){
         this.orderDetailRepository = orderDetailRepository;
         this.messagePublisher = messagePublisher;
+        this.restTemplate = restTemplate;
     }
 
     public List<OrderDetail> findAll() {
@@ -45,10 +53,26 @@ public class OrderDetailService {
         }
     }
 
+    private void enoughStock(Integer productId, Integer quantity){
+        ResponseEntity<ProductStockDto> product = restTemplate.getForEntity(RestConfig.PRODUCT_API_URL + productId, ProductStockDto.class);
+        switch (product.getStatusCode()){
+            case HttpStatus.NOT_FOUND:
+                throw new IllegalStateException("The product don't exist.");
+            case HttpStatus.INTERNAL_SERVER_ERROR:
+                throw new IllegalStateException("Something went wrong with the client api during the user verification.");
+            case HttpStatus.OK:
+                if(product.getBody().getStock() < quantity)
+                    throw new IllegalStateException("Not enough stock.");
+            default:
+                break;
+        }
+    }
+
     public OrderDetail insert(OrderDetail orderDetail) throws IllegalStateException {
         if (orderDetail.getIdOrderDetail() != null && orderDetailRepository.existsById(orderDetail.getIdOrderDetail())) {
             throw new IllegalStateException("Entity already exists. Use update.");
         }
+        enoughStock(orderDetail.getIdOrderDetail(), orderDetail.getQuantity());
         Map<String, Object> information = new HashMap<>();
         information.put("productId", orderDetail.getIdProduct());
         information.put("quantity", orderDetail.getQuantity());
@@ -62,6 +86,7 @@ public class OrderDetailService {
         }
         OrderDetail oldOrderDetail = orderDetailRepository.findById(orderDetail.getIdOrderDetail()).get();
         if(!oldOrderDetail.getQuantity().equals(orderDetail.getQuantity())){
+            enoughStock(orderDetail.getIdOrderDetail(), orderDetail.getQuantity() - oldOrderDetail.getQuantity());
             Map<String, Object> information = new HashMap<>();
             information.put("productId", orderDetail.getIdProduct());
             information.put("oldQuantity", oldOrderDetail.getQuantity());
